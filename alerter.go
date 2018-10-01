@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/brotherlogic/goserver"
 	"github.com/brotherlogic/goserver/utils"
@@ -133,6 +134,7 @@ func main() {
 	server.Register = server
 
 	server.RegisterServer("alerter", false)
+	server.RegisterRepeatingTask(server.runVersionCheck, "run_version_check", time.Hour)
 	server.Log("Starting Alerter!")
 	server.Serve()
 }

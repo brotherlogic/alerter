@@ -133,6 +133,6 @@ func main() {
 	server.Register = server
 
 	server.RegisterServer("alerter", false)
-	server.Log("Starting!")
+	server.Log("Starting Alerter!")
 	server.Serve()
 }

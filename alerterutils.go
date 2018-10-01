@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	pbbs "github.com/brotherlogic/buildserver/proto"
 	"golang.org/x/net/context"
 
@@ -19,6 +21,9 @@ func (s *Server) runVersionCheck(ctx context.Context) {
 					for _, job := range jobs.Jobs {
 						runningVersion := job.RunningVersion
 						latest, err := s.buildServer.GetVersions(ctx, &pbbs.VersionRequest{Job: job.Job, JustLatest: true})
+						if len(latest.Versions) > 0 {
+							s.Log(fmt.Sprintf("Checking these versions: %v", latest.Versions))
+						}
 
 						if err == nil && len(latest.Versions) > 0 && latest.Versions[0].Version != runningVersion {
 							s.alertCount++

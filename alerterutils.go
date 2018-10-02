@@ -21,7 +21,7 @@ func (s *Server) runVersionCheck(ctx context.Context) {
 					for _, job := range jobs.Jobs {
 						runningVersion := job.RunningVersion
 						latest, err := s.buildServer.GetVersions(ctx, &pbbs.VersionRequest{Job: job.Job, JustLatest: true})
-						if err == nil && len(latest.Versions) > 0 {
+						if err == nil && latest != nil && len(latest.Versions) > 0 {
 							s.Log(fmt.Sprintf("Checking these versions: %v", latest.Versions))
 						}
 

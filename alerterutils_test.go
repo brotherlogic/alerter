@@ -26,7 +26,7 @@ func (t *testBuildserver) GetVersions(ctx context.Context, req *pbbs.VersionRequ
 type testGobuildslave struct{}
 
 func (t *testGobuildslave) ListJobs(ctx context.Context, server *pbd.RegistryEntry, req *pbgbs.ListRequest) (*pbgbs.ListResponse, error) {
-	return &pbgbs.ListResponse{Jobs: []*pbgbs.JobAssignment{&pbgbs.JobAssignment{RunningVersion: "not_testing"}}}, nil
+	return &pbgbs.ListResponse{Jobs: []*pbgbs.JobAssignment{&pbgbs.JobAssignment{RunningVersion: "not_testing", Job: &pbgbs.Job{Name: "madeup"}}}}, nil
 }
 
 func InitTestServer() *Server {

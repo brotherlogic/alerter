@@ -27,7 +27,7 @@ func (s *Server) runVersionCheck(ctx context.Context) {
 
 						if err == nil && len(latest.Versions) > 0 && latest.Versions[0].Version != runningVersion {
 							s.alertCount++
-							s.RaiseIssue(ctx, "Version Problem", "Version", false)
+							s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version", job.Job.Name), false)
 						}
 					}
 				}

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"log"
 	"testing"
 
+	pbg "github.com/brotherlogic/goserver/proto"
 	"github.com/brotherlogic/keystore/client"
 	"golang.org/x/net/context"
 
@@ -29,6 +31,12 @@ func (t *testGobuildslave) ListJobs(ctx context.Context, server *pbd.RegistryEnt
 	return &pbgbs.ListResponse{Jobs: []*pbgbs.JobAssignment{&pbgbs.JobAssignment{RunningVersion: "not_testing", Job: &pbgbs.Job{Name: "madeup"}}}}, nil
 }
 
+type testGoserver struct{}
+
+func (t *testGoserver) GetStats(ctx context.Context, server string) (*pbg.ServerState, error) {
+	return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "concurrent_builds", Value: int64(2)}}}, nil
+}
+
 func InitTestServer() *Server {
 	s := Init()
 	s.discover = &testDiscovery{}
@@ -36,6 +44,7 @@ func InitTestServer() *Server {
 	s.gobuildSlave = &testGobuildslave{}
 	s.SkipLog = true
 	s.GoServer.KSclient = *keystoreclient.GetTestClient(".test")
+	s.goserver = &testGoserver{}
 	return s
 }
 
@@ -43,6 +52,16 @@ func TestAlert(t *testing.T) {
 	s := InitTestServer()
 	s.runVersionCheck(context.Background())
 
+	if s.alertCount != 1 {
+		t.Errorf("Error in alerting")
+	}
+}
+
+func TestBuildAlert(t *testing.T) {
+	s := InitTestServer()
+	s.lookForSimulBuilds(context.Background())
+
+	log.Printf("COUNT: %v", s.alertCount)
 	if s.alertCount != 1 {
 		t.Errorf("Error in alerting")
 	}

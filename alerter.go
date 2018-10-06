@@ -19,6 +19,25 @@ import (
 	pbg "github.com/brotherlogic/goserver/proto"
 )
 
+// Goserver interface to a server
+type Goserver interface {
+	GetStats(ctx context.Context, server string) (*pbg.ServerState, error)
+}
+
+type prodGoserver struct{}
+
+func (p *prodGoserver) GetStats(ctx context.Context, server string) (*pbg.ServerState, error) {
+	ip, port, err := utils.Resolve(server)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+	defer conn.Close()
+	client := pbg.NewGoserverServiceClient(conn)
+	return client.State(ctx, &pbg.Empty{})
+}
+
 // Discovery interface to discover
 type Discovery interface {
 	ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error)
@@ -85,6 +104,7 @@ type Server struct {
 	gobuildSlave GobuildSlave
 	discover     Discovery
 	alertCount   int
+	goserver     Goserver
 }
 
 // Init builds the server
@@ -95,6 +115,7 @@ func Init() *Server {
 		&prodGobuildSlave{},
 		&prodDiscovery{},
 		0,
+		&prodGoserver{},
 	}
 	return s
 }
@@ -135,6 +156,7 @@ func main() {
 
 	server.RegisterServer("alerter", false)
 	server.RegisterRepeatingTask(server.runVersionCheck, "run_version_check", time.Hour)
+	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
 	server.Log("Starting Alerter!")
 	server.Serve()
 }

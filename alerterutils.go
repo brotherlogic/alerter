@@ -37,6 +37,7 @@ func (s *Server) runVersionCheck(ctx context.Context) {
 }
 
 func (s *Server) lookForSimulBuilds(ctx context.Context) {
+	s.Log("Looking for concurrent builds")
 	stats, err := s.goserver.GetStats(ctx, "buildserver")
 	if err == nil {
 		for _, state := range stats.States {

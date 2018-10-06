@@ -35,3 +35,15 @@ func (s *Server) runVersionCheck(ctx context.Context) {
 		}
 	}
 }
+
+func (s *Server) lookForSimulBuilds(ctx context.Context) {
+	stats, err := s.goserver.GetStats(ctx, "buildserver")
+	if err == nil {
+		for _, state := range stats.States {
+			if state.Key == "concurrent_builds" && state.Value > int64(1) {
+				s.alertCount++
+				s.RaiseIssue(ctx, "ConcurrentBuilds", fmt.Sprintf("Buildserver is reporting concurrent builds: %v", state.Value), false)
+			}
+		}
+	}
+}

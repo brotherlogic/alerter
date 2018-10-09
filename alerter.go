@@ -47,11 +47,12 @@ type prodDiscovery struct{}
 
 func (p *prodDiscovery) ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error) {
 	conn, err := grpc.Dial(utils.Discover, grpc.WithInsecure())
+	defer conn.Close()
+
 	if err != nil {
 		return nil, err
 	}
 
-	defer conn.Close()
 	client := pbd.NewDiscoveryServiceClient(conn)
 	return client.ListAllServices(ctx, req)
 }
@@ -71,6 +72,7 @@ func (p *prodBuildserver) GetVersions(ctx context.Context, req *pbbs.VersionRequ
 
 	conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 	defer conn.Close()
+
 	if err != nil {
 		return nil, err
 	}

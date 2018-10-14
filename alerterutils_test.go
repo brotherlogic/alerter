@@ -34,7 +34,7 @@ func (t *testGobuildslave) ListJobs(ctx context.Context, server *pbd.RegistryEnt
 type testGoserver struct{}
 
 func (t *testGoserver) GetStats(ctx context.Context, server string) (*pbg.ServerState, error) {
-	return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "concurrent_builds", Value: int64(2)}}}, nil
+	return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(200)}}}, nil
 }
 
 func InitTestServer() *Server {
@@ -62,6 +62,14 @@ func TestBuildAlert(t *testing.T) {
 	s.lookForSimulBuilds(context.Background())
 
 	log.Printf("COUNT: %v", s.alertCount)
+	if s.alertCount != 1 {
+		t.Errorf("Error in alerting")
+	}
+}
+
+func TestCPUAlert(t *testing.T) {
+	s := InitTestServer()
+	s.lookForHighCPU(context.Background())
 	if s.alertCount != 1 {
 		t.Errorf("Error in alerting")
 	}

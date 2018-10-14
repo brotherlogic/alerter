@@ -48,3 +48,27 @@ func (s *Server) lookForSimulBuilds(ctx context.Context) {
 		}
 	}
 }
+
+func (s *Server) lookForHighCPU(ctx context.Context) {
+	s.Log("Looking for high CPU usage")
+
+	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
+	if err == nil {
+		seen := make(map[string]bool)
+
+		for _, service := range serv.Services.Services {
+			if !seen[service.Name] {
+				stats, err := s.goserver.GetStats(ctx, service.Name)
+
+				if err == nil {
+					for _, state := range stats.States {
+						if state.Key == "cpu" && state.Fraction > float64(80) {
+							s.alertCount++
+							s.RaiseIssue(ctx, "High CPU", fmt.Sprintf("%v is reporting high cpu: %v", service.Name, state.Fraction), false)
+						}
+					}
+				}
+			}
+		}
+	}
+}

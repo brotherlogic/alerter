@@ -159,6 +159,7 @@ func main() {
 	server.RegisterServer("alerter", false)
 	server.RegisterRepeatingTask(server.runVersionCheck, "run_version_check", time.Hour)
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
+	server.RegisterRepeatingTask(server.lookForHighCPU, "look_for_high_cpu", time.Minute*5)
 	server.Log("Starting Alerter!")
 	server.Serve()
 }

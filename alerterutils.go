@@ -72,3 +72,30 @@ func (s *Server) lookForHighCPU(ctx context.Context) {
 		}
 	}
 }
+
+func (s *Server) lookForGoVersion(ctx context.Context) {
+	s.Log("Looking for high CPU usage")
+
+	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
+	if err == nil {
+		for _, service := range serv.Services.Services {
+			if service.Name == "gobuildslave" {
+				stats, err := s.goserver.GetStats(ctx, service.Name)
+
+				if err == nil {
+					seen := false
+					for _, state := range stats.States {
+						if state.Key == "go_version" && state.Text != "madeupversion" {
+							s.alertCount++
+							s.RaiseIssue(ctx, "Bad Version", fmt.Sprintf("%v (%v) is on the wrong go version", service.Identifier, state.Text), false)
+						}
+					}
+					if !seen {
+						s.alertCount++
+						s.RaiseIssue(ctx, "No Version", fmt.Sprintf("%v is not reporting a go version", service.Identifier), false)
+					}
+				}
+			}
+		}
+	}
+}

@@ -31,9 +31,14 @@ func (t *testGobuildslave) ListJobs(ctx context.Context, server *pbd.RegistryEnt
 	return &pbgbs.ListResponse{Jobs: []*pbgbs.JobAssignment{&pbgbs.JobAssignment{RunningVersion: "not_testing", Job: &pbgbs.Job{Name: "madeup"}}}}, nil
 }
 
-type testGoserver struct{}
+type testGoserver struct {
+	hasGoVersion bool
+}
 
 func (t *testGoserver) GetStats(ctx context.Context, server string) (*pbg.ServerState, error) {
+	if t.hasGoVersion {
+		return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "go_version", Text: "badversion"}, &pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(200)}}}, nil
+	}
 	return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(200)}}}, nil
 }
 
@@ -72,5 +77,22 @@ func TestCPUAlert(t *testing.T) {
 	s.lookForHighCPU(context.Background())
 	if s.alertCount != 1 {
 		t.Errorf("Error in alerting")
+	}
+}
+
+func TestGoVersionAlert(t *testing.T) {
+	s := InitTestServer()
+	s.lookForGoVersion(context.Background())
+	if s.alertCount != 1 {
+		t.Errorf("Error in alerting: %v", s.alertCount)
+	}
+}
+
+func TestGoVersionAlertWithVersion(t *testing.T) {
+	s := InitTestServer()
+	s.goserver = &testGoserver{hasGoVersion: true}
+	s.lookForGoVersion(context.Background())
+	if s.alertCount != 2 {
+		t.Errorf("Error in alerting: %v", s.alertCount)
 	}
 }

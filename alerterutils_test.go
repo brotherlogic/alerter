@@ -92,7 +92,7 @@ func TestGoVersionAlertWithVersion(t *testing.T) {
 	s := InitTestServer()
 	s.goserver = &testGoserver{hasGoVersion: true}
 	s.lookForGoVersion(context.Background())
-	if s.alertCount != 2 {
+	if s.alertCount != 1 {
 		t.Errorf("Error in alerting: %v", s.alertCount)
 	}
 }

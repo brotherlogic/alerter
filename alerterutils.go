@@ -85,7 +85,7 @@ func (s *Server) lookForGoVersion(ctx context.Context) {
 				if err == nil {
 					seen := false
 					for _, state := range stats.States {
-						if state.Key == "go_version" && state.Text != "madeupversion" {
+						if state.Key == "go_version" && state.Text != "go1.9" {
 							s.alertCount++
 							s.RaiseIssue(ctx, "Bad Version", fmt.Sprintf("%v (%v) is on the wrong go version", service.Identifier, state.Text), false)
 							seen = true

@@ -26,12 +26,19 @@ func (s *Server) runVersionCheck(ctx context.Context) {
 							s.Log(fmt.Sprintf("Checking these versions: %v", latest.Versions))
 						}
 
-						if err == nil && len(latest.Versions) > 0 && latest.Versions[0].Version != runningVersion && len(runningVersion) > 0 {
-							s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now().Unix()
-							s.alertCount++
+						if err == nil && len(latest.Versions) > 0 {
+							if latest.Versions[0].Version != runningVersion && len(runningVersion) > 0 {
+								s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now().Unix()
+								s.alertCount++
 
-							s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version (%v vs %v)", job.Job.Name, runningVersion, latest.Versions[0].Version), false)
+								s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version (%v vs %v)", job.Job.Name, runningVersion, latest.Versions[0].Version), false)
+
+							} else {
+								delete(s.lastMismatchTime, service.Identifier+job.Job.Name)
+							}
+
 						}
+
 					}
 				}
 			}

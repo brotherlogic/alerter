@@ -109,6 +109,7 @@ type Server struct {
 	alertCount       int
 	goserver         Goserver
 	lastMismatchTime map[string]int64
+	highCPU          map[string]int64
 }
 
 // Init builds the server
@@ -120,6 +121,7 @@ func Init() *Server {
 		&prodDiscovery{},
 		0,
 		&prodGoserver{},
+		make(map[string]int64),
 		make(map[string]int64),
 	}
 	return s
@@ -144,6 +146,7 @@ func (s *Server) Mote(ctx context.Context, master bool) error {
 func (s *Server) GetState() []*pbg.State {
 	return []*pbg.State{
 		&pbg.State{Key: "mismatch", Text: fmt.Sprintf("%v", s.lastMismatchTime)},
+		&pbg.State{Key: "cpu", Text: fmt.Sprintf("%v", s.highCPU)},
 	}
 }
 

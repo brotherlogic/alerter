@@ -162,7 +162,7 @@ func main() {
 	server.Register = server
 
 	server.RegisterServer("alerter", false)
-	server.RegisterRepeatingTask(server.runVersionCheck, "run_version_check", time.Hour)
+	server.RegisterRepeatingTask(server.runVersionCheck, "run_version_check", time.Minute)
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
 	server.RegisterRepeatingTask(server.lookForHighCPU, "look_for_high_cpu", time.Minute*5)
 	server.RegisterRepeatingTask(server.lookForGoVersion, "look_for_go_version", time.Hour)

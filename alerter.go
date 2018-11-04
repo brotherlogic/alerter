@@ -146,7 +146,7 @@ func (s *Server) Mote(ctx context.Context, master bool) error {
 func (s *Server) GetState() []*pbg.State {
 	return []*pbg.State{
 		&pbg.State{Key: "mismatch", Text: fmt.Sprintf("%v", s.lastMismatchTime)},
-		&pbg.State{Key: "cpu", Text: fmt.Sprintf("%v", s.highCPU)},
+		&pbg.State{Key: "high_cpu", Text: fmt.Sprintf("%v", s.highCPU)},
 	}
 }
 

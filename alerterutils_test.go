@@ -19,10 +19,15 @@ func (t *testDiscovery) ListAllServices(ctx context.Context, req *pbd.ListReques
 	return &pbd.ListResponse{Services: &pbd.ServiceList{Services: []*pbd.RegistryEntry{&pbd.RegistryEntry{Name: "gobuildslave", Ip: "1234", Port: int32(123)}}}}, nil
 }
 
-type testBuildserver struct{}
+type testBuildserver struct {
+	match bool
+}
 
 func (t *testBuildserver) GetVersions(ctx context.Context, req *pbbs.VersionRequest) (*pbbs.VersionResponse, error) {
-	return &pbbs.VersionResponse{Versions: []*pbbs.Version{&pbbs.Version{Version: "testing"}}}, nil
+	if !t.match {
+		return &pbbs.VersionResponse{Versions: []*pbbs.Version{&pbbs.Version{Version: "testing"}}}, nil
+	}
+	return &pbbs.VersionResponse{Versions: []*pbbs.Version{&pbbs.Version{Version: "not_testing"}}}, nil
 }
 
 type testGobuildslave struct{}
@@ -55,6 +60,17 @@ func InitTestServer() *Server {
 
 func TestAlert(t *testing.T) {
 	s := InitTestServer()
+	s.runVersionCheck(context.Background())
+
+	if s.alertCount != 1 {
+		t.Errorf("Error in alerting")
+	}
+}
+
+func TestAlertClear(t *testing.T) {
+	s := InitTestServer()
+	s.runVersionCheck(context.Background())
+	s.buildServer = &testBuildserver{match: true}
 	s.runVersionCheck(context.Background())
 
 	if s.alertCount != 1 {

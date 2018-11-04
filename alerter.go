@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -102,11 +103,12 @@ func (p *prodGobuildSlave) ListJobs(ctx context.Context, server *pbd.RegistryEnt
 //Server main server type
 type Server struct {
 	*goserver.GoServer
-	buildServer  BuildServer
-	gobuildSlave GobuildSlave
-	discover     Discovery
-	alertCount   int
-	goserver     Goserver
+	buildServer      BuildServer
+	gobuildSlave     GobuildSlave
+	discover         Discovery
+	alertCount       int
+	goserver         Goserver
+	lastMismatchTime map[string]int64
 }
 
 // Init builds the server
@@ -118,6 +120,7 @@ func Init() *Server {
 		&prodDiscovery{},
 		0,
 		&prodGoserver{},
+		make(map[string]int64),
 	}
 	return s
 }
@@ -139,7 +142,9 @@ func (s *Server) Mote(ctx context.Context, master bool) error {
 
 // GetState gets the state of the server
 func (s *Server) GetState() []*pbg.State {
-	return []*pbg.State{}
+	return []*pbg.State{
+		&pbg.State{Key: "mismatch", Text: fmt.Sprintf("%v", s.lastMismatchTime)},
+	}
 }
 
 func main() {

@@ -61,7 +61,18 @@ func InitTestServer() *Server {
 
 func TestAlert(t *testing.T) {
 	s := InitTestServer()
-	s.runVersionCheck(context.Background())
+	s.runVersionCheck(context.Background(), time.Hour)
+
+	if s.alertCount != 0 {
+		t.Errorf("Error in alerting")
+	}
+}
+
+func TestAlertWithTIme(t *testing.T) {
+	s := InitTestServer()
+	s.runVersionCheck(context.Background(), time.Hour)
+	time.Sleep(time.Second)
+	s.runVersionCheck(context.Background(), time.Millisecond)
 
 	if s.alertCount != 1 {
 		t.Errorf("Error in alerting")
@@ -70,11 +81,11 @@ func TestAlert(t *testing.T) {
 
 func TestAlertClear(t *testing.T) {
 	s := InitTestServer()
-	s.runVersionCheck(context.Background())
+	s.runVersionCheck(context.Background(), time.Hour)
 	s.buildServer = &testBuildserver{match: true}
-	s.runVersionCheck(context.Background())
+	s.runVersionCheck(context.Background(), time.Hour)
 
-	if s.alertCount != 1 {
+	if s.alertCount != 0 {
 		t.Errorf("Error in alerting")
 	}
 }
@@ -110,15 +121,6 @@ func TestCPUAlertWithVersion(t *testing.T) {
 
 func TestGoVersionAlert(t *testing.T) {
 	s := InitTestServer()
-	s.lookForGoVersion(context.Background())
-	if s.alertCount != 1 {
-		t.Errorf("Error in alerting: %v", s.alertCount)
-	}
-}
-
-func TestGoVersionAlertWithVersion(t *testing.T) {
-	s := InitTestServer()
-	s.goserver = &testGoserver{reportsNormal: true}
 	s.lookForGoVersion(context.Background())
 	if s.alertCount != 1 {
 		t.Errorf("Error in alerting: %v", s.alertCount)

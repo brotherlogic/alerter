@@ -59,7 +59,7 @@ func (s *Server) lookForSimulBuilds(ctx context.Context) {
 	}
 }
 
-func (s *Server) lookForHighCPU(ctx context.Context) {
+func (s *Server) lookForHighCPU(ctx context.Context, delay time.Duration) {
 	s.Log("Looking for high CPU usage")
 
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
@@ -74,9 +74,14 @@ func (s *Server) lookForHighCPU(ctx context.Context) {
 					for _, state := range stats.States {
 						if state.Key == "cpu" {
 							if state.Fraction > float64(80) {
-								s.alertCount++
-								s.highCPU[service.Name+service.Identifier] = time.Now().Unix()
-								s.RaiseIssue(ctx, "High CPU", fmt.Sprintf("%v (%v) is reporting high cpu: %v", service.Name, service.Identifier, state.Fraction), false)
+								if _, ok := s.highCPU[service.Name+service.Identifier]; !ok {
+									s.highCPU[service.Name+service.Identifier] = time.Now()
+								}
+
+								if time.Now().Sub(s.highCPU[service.Name+service.Identifier]) > delay {
+									s.alertCount++
+									s.RaiseIssue(ctx, "High CPU", fmt.Sprintf("%v (%v) is reporting high cpu: %v", service.Name, service.Identifier, state.Fraction), false)
+								}
 							} else {
 								delete(s.highCPU, service.Name+service.Identifier)
 							}

@@ -72,10 +72,14 @@ func (s *Server) lookForHighCPU(ctx context.Context) {
 
 				if err == nil {
 					for _, state := range stats.States {
-						if state.Key == "cpu" && state.Fraction > float64(80) {
-							s.alertCount++
-							s.highCPU[service.Name+service.Identifier] = time.Now().Unix()
-							s.RaiseIssue(ctx, "High CPU", fmt.Sprintf("%v (%v) is reporting high cpu: %v", service.Name, service.Identifier, state.Fraction), false)
+						if state.Key == "cpu" {
+							if state.Fraction > float64(80) {
+								s.alertCount++
+								s.highCPU[service.Name+service.Identifier] = time.Now().Unix()
+								s.RaiseIssue(ctx, "High CPU", fmt.Sprintf("%v (%v) is reporting high cpu: %v", service.Name, service.Identifier, state.Fraction), false)
+							} else {
+								delete(s.highCPU, service.Name+service.Identifier)
+							}
 						}
 					}
 				}

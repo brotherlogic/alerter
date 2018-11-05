@@ -12,7 +12,7 @@ import (
 	pbd "github.com/brotherlogic/discovery/proto"
 )
 
-func (s *Server) runVersionCheck(ctx context.Context) {
+func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) {
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
 	if err == nil {
 		for _, service := range serv.Services.Services {
@@ -28,10 +28,14 @@ func (s *Server) runVersionCheck(ctx context.Context) {
 
 						if err == nil && len(latest.Versions) > 0 {
 							if latest.Versions[0].Version != runningVersion && len(runningVersion) > 0 {
-								s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now().Unix()
-								s.alertCount++
+								if _, ok := s.lastMismatchTime[service.Identifier+job.Job.Name]; !ok {
+									s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now()
+								}
 
-								s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version (%v vs %v)", job.Job.Name, runningVersion, latest.Versions[0].Version), false)
+								if time.Now().Sub(s.lastMismatchTime[service.Identifier+job.Job.Name]) > delay {
+									s.alertCount++
+									s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version (%v vs %v)", job.Job.Name, runningVersion, latest.Versions[0].Version), false)
+								}
 
 							} else {
 								delete(s.lastMismatchTime, service.Identifier+job.Job.Name)

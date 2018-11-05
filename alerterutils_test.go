@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"testing"
+	"time"
 
 	pbg "github.com/brotherlogic/goserver/proto"
 	"github.com/brotherlogic/keystore/client"
@@ -90,7 +91,7 @@ func TestBuildAlert(t *testing.T) {
 
 func TestCPUAlert(t *testing.T) {
 	s := InitTestServer()
-	s.lookForHighCPU(context.Background())
+	s.lookForHighCPU(context.Background(), time.Hour)
 	if s.alertCount != 0 {
 		t.Errorf("Error in alerting")
 	}
@@ -99,7 +100,9 @@ func TestCPUAlert(t *testing.T) {
 func TestCPUAlertWithVersion(t *testing.T) {
 	s := InitTestServer()
 	s.goserver = &testGoserver{reportsNormal: true}
-	s.lookForHighCPU(context.Background())
+	s.lookForHighCPU(context.Background(), time.Hour)
+	time.Sleep(time.Second)
+	s.lookForHighCPU(context.Background(), time.Millisecond)
 	if s.alertCount != 1 {
 		t.Errorf("Error in alerting: %v", s.alertCount)
 	}

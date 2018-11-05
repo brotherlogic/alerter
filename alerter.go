@@ -109,7 +109,7 @@ type Server struct {
 	alertCount       int
 	goserver         Goserver
 	lastMismatchTime map[string]int64
-	highCPU          map[string]int64
+	highCPU          map[string]time.Time
 }
 
 // Init builds the server
@@ -122,7 +122,7 @@ func Init() *Server {
 		0,
 		&prodGoserver{},
 		make(map[string]int64),
-		make(map[string]int64),
+		make(map[string]time.Time),
 	}
 	return s
 }
@@ -150,6 +150,10 @@ func (s *Server) GetState() []*pbg.State {
 	}
 }
 
+func (s *Server) highCPULoop(ctx context.Context) {
+	s.lookForHighCPU(ctx, time.Minute*20)
+}
+
 func main() {
 	var quiet = flag.Bool("quiet", false, "Show all output")
 	flag.Parse()
@@ -167,7 +171,7 @@ func main() {
 	server.RegisterServer("alerter", false)
 	server.RegisterRepeatingTask(server.runVersionCheck, "run_version_check", time.Minute)
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
-	server.RegisterRepeatingTask(server.lookForHighCPU, "look_for_high_cpu", time.Minute*5)
+	server.RegisterRepeatingTask(server.highCPULoop, "look_for_high_cpu", time.Minute*5)
 	server.RegisterRepeatingTask(server.lookForGoVersion, "look_for_go_version", time.Hour)
 	server.Log("Starting Alerter!")
 	server.Serve()

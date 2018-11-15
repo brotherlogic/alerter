@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	pbbs "github.com/brotherlogic/buildserver/proto"
 	"golang.org/x/net/context"
 
-	pbgs "github.com/brotherlogic/gobuildslave/proto"
-
+	pbbs "github.com/brotherlogic/buildserver/proto"
 	pbd "github.com/brotherlogic/discovery/proto"
+	pbgs "github.com/brotherlogic/gobuildslave/proto"
+	pbt "github.com/brotherlogic/tracer/proto"
 )
 
 func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) {
@@ -64,9 +64,11 @@ func (s *Server) lookForSimulBuilds(ctx context.Context) {
 }
 
 func (s *Server) lookForHighCPU(ctx context.Context, delay time.Duration) {
-	s.Log("Looking for high CPU usage")
+	ctx = s.LogTrace(ctx, "lookForHighCPU", time.Now(), pbt.Milestone_START_FUNCTION)
 
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
+
+	s.LogTrace(ctx, "ListedServices", time.Now(), pbt.Milestone_MARKER)
 	if err == nil {
 		seen := make(map[string]bool)
 
@@ -95,6 +97,7 @@ func (s *Server) lookForHighCPU(ctx context.Context, delay time.Duration) {
 			}
 		}
 	}
+	s.LogTrace(ctx, "lookForHighCPU", time.Now(), pbt.Milestone_END_FUNCTION)
 }
 
 func (s *Server) lookForGoVersion(ctx context.Context) {

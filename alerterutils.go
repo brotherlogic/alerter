@@ -14,27 +14,32 @@ import (
 
 func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) {
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
+	versionMap := make(map[string]string)
 	if err == nil {
-		for _, service := range serv.Services.Services {
-			if service.Name == "gobuildslave" {
-				jobs, err := s.gobuildSlave.ListJobs(ctx, service, &pbgs.ListRequest{})
-				if err == nil {
-					for _, job := range jobs.Jobs {
-						runningVersion := job.RunningVersion
-						latest, err := s.buildServer.GetVersions(ctx, &pbbs.VersionRequest{Job: job.Job, JustLatest: true})
-						if err == nil && latest != nil && len(latest.Versions) > 0 {
-							s.Log(fmt.Sprintf("Checking these versions: %v", latest.Versions))
-						}
-
-						if err == nil && len(latest.Versions) > 0 {
-							if latest.Versions[0].Version != runningVersion && len(runningVersion) > 0 {
+		versions, err := s.buildServer.GetVersions(ctx, &pbbs.VersionRequest{JustLatest: true})
+		if err == nil {
+			for _, v := range versions.Versions {
+				versionMap[v.Job.Name] = v.Version
+			}
+			for _, service := range serv.Services.Services {
+				if service.Name == "gobuildslave" {
+					jobs, err := s.gobuildSlave.ListJobs(ctx, service, &pbgs.ListRequest{})
+					if err == nil {
+						for _, job := range jobs.Jobs {
+							runningVersion := job.RunningVersion
+							compiledVersion, ok := versionMap[job.Job.Name]
+							if !ok {
+								s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v has no version built", job.Job.Name), false)
+								return
+							}
+							if compiledVersion != runningVersion && len(runningVersion) > 0 {
 								if _, ok := s.lastMismatchTime[service.Identifier+job.Job.Name]; !ok {
 									s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now()
 								}
 
 								if time.Now().Sub(s.lastMismatchTime[service.Identifier+job.Job.Name]) > delay {
 									s.alertCount++
-									s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version (%v vs %v)", job.Job.Name, runningVersion, latest.Versions[0].Version), false)
+									s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version (%v vs %v)", job.Job.Name, runningVersion, compiledVersion), false)
 								}
 
 							} else {
@@ -42,7 +47,6 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) {
 							}
 
 						}
-
 					}
 				}
 			}

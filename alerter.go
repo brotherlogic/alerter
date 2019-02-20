@@ -137,6 +137,11 @@ func (s *Server) ReportHealth() bool {
 	return true
 }
 
+// Shutdown the server
+func (s *Server) Shutdown(ctx context.Context) error {
+	return nil
+}
+
 // Mote promotes/demotes this server
 func (s *Server) Mote(ctx context.Context, master bool) error {
 	return nil
@@ -171,6 +176,7 @@ func main() {
 	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)
 	server.PrepServer()
 	server.Register = server
+	server.SendTrace = true
 
 	server.RegisterServer("alerter", false)
 	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Minute)

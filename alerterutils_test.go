@@ -114,8 +114,8 @@ func TestBuildAlert(t *testing.T) {
 	s.lookForSimulBuilds(context.Background())
 
 	log.Printf("COUNT: %v", s.alertCount)
-	if s.alertCount != 1 {
-		t.Errorf("Error in alerting")
+	if s.alertCount != 0 {
+		t.Errorf("Error in alerting: %v", s.alertCount)
 	}
 }
 

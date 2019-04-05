@@ -155,12 +155,14 @@ func (s *Server) GetState() []*pbg.State {
 	}
 }
 
-func (s *Server) highCPULoop(ctx context.Context) {
+func (s *Server) highCPULoop(ctx context.Context) error {
 	s.lookForHighCPU(ctx, time.Minute*20)
+	return nil
 }
 
-func (s *Server) runVersionCheckLoop(ctx context.Context) {
+func (s *Server) runVersionCheckLoop(ctx context.Context) error {
 	s.runVersionCheck(ctx, time.Minute*20)
+	return nil
 }
 
 func main() {

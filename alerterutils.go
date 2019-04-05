@@ -11,7 +11,7 @@ import (
 	pbgs "github.com/brotherlogic/gobuildslave/proto"
 )
 
-func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) {
+func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error {
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
 	versionMap := make(map[string]string)
 	if err == nil {
@@ -29,7 +29,7 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) {
 							compiledVersion, ok := versionMap[job.Job.Name]
 							if !ok {
 								s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v has no version built", job.Job.Name), false)
-								return
+								return nil
 							}
 							if compiledVersion != runningVersion && len(runningVersion) > 0 {
 								if _, ok := s.lastMismatchTime[service.Identifier+job.Job.Name]; !ok {
@@ -51,9 +51,11 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) {
 			}
 		}
 	}
+
+	return nil
 }
 
-func (s *Server) lookForSimulBuilds(ctx context.Context) {
+func (s *Server) lookForSimulBuilds(ctx context.Context) error {
 	s.Log("Looking for concurrent builds")
 	stats, err := s.goserver.GetStats(ctx, "buildserver")
 	if err == nil {
@@ -64,6 +66,7 @@ func (s *Server) lookForSimulBuilds(ctx context.Context) {
 			}
 		}
 	}
+	return nil
 }
 
 func (s *Server) lookForHighCPU(ctx context.Context, delay time.Duration) {
@@ -99,7 +102,7 @@ func (s *Server) lookForHighCPU(ctx context.Context, delay time.Duration) {
 	}
 }
 
-func (s *Server) lookForGoVersion(ctx context.Context) {
+func (s *Server) lookForGoVersion(ctx context.Context) error {
 	s.Log("Looking for high CPU usage")
 
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
@@ -127,4 +130,6 @@ func (s *Server) lookForGoVersion(ctx context.Context) {
 			}
 		}
 	}
+
+	return nil
 }

@@ -50,7 +50,7 @@ type testGoserver struct {
 func (t *testGoserver) GetStats(ctx context.Context, server string) (*pbg.ServerState, error) {
 	if t.reportsNormal {
 		if t.goversion {
-			return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "go_version", Text: "go1.9"}, &pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(200)}}}, nil
+			return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "go_version", Text: "go1.10"}, &pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(200)}}}, nil
 		}
 		return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "go_version", Text: "badversion"}, &pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(200)}}}, nil
 	}

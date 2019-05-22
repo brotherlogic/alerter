@@ -22,18 +22,29 @@ import (
 
 // Goserver interface to a server
 type Goserver interface {
-	GetStats(ctx context.Context, server string) (*pbg.ServerState, error)
+	GetStats(ctx context.Context, ip string, port int32) (*pbg.ServerState, error)
+	GetStatsSingle(ctx context.Context, host string) (*pbg.ServerState, error)
 }
 
-type prodGoserver struct{}
+type prodGoserver struct {
+	dial func(server string) (*grpc.ClientConn, error)
+}
 
-func (p *prodGoserver) GetStats(ctx context.Context, server string) (*pbg.ServerState, error) {
-	ip, port, err := utils.Resolve(server)
+func (p *prodGoserver) GetStatsSingle(ctx context.Context, server string) (*pbg.ServerState, error) {
+	conn, err := p.dial(server)
 	if err != nil {
 		return nil, err
 	}
+	defer conn.Close()
+	client := pbg.NewGoserverServiceClient(conn)
+	return client.State(ctx, &pbg.Empty{})
+}
 
+func (p *prodGoserver) GetStats(ctx context.Context, ip string, port int32) (*pbg.ServerState, error) {
 	conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
 	defer conn.Close()
 	client := pbg.NewGoserverServiceClient(conn)
 	return client.State(ctx, &pbg.Empty{})
@@ -124,6 +135,7 @@ func Init() *Server {
 		make(map[string]time.Time),
 		make(map[string]time.Time),
 	}
+	s.goserver = &prodGoserver{dial: s.DialMaster}
 	return s
 }
 

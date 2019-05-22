@@ -57,7 +57,7 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error
 
 func (s *Server) lookForSimulBuilds(ctx context.Context) error {
 	s.Log("Looking for concurrent builds")
-	stats, err := s.goserver.GetStats(ctx, "buildserver")
+	stats, err := s.goserver.GetStatsSingle(ctx, "buildserver")
 	if err == nil {
 		for _, state := range stats.States {
 			if state.Key == "concurrent_builds" && state.Value > int64(2) {
@@ -77,7 +77,7 @@ func (s *Server) lookForHighCPU(ctx context.Context, delay time.Duration) {
 
 		for _, service := range serv.Services.Services {
 			if !seen[service.Name] {
-				stats, err := s.goserver.GetStats(ctx, service.Name)
+				stats, err := s.goserver.GetStatsSingle(ctx, service.Name)
 
 				if err == nil {
 					for _, state := range stats.States {
@@ -109,7 +109,7 @@ func (s *Server) lookForGoVersion(ctx context.Context) error {
 	if err == nil {
 		for _, service := range serv.Services.Services {
 			if service.Name == "gobuildslave" {
-				stats, err := s.goserver.GetStats(ctx, service.Name)
+				stats, err := s.goserver.GetStats(ctx, service.Ip, service.Port)
 
 				if err == nil {
 					seen := false

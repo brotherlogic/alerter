@@ -167,11 +167,6 @@ func (s *Server) GetState() []*pbg.State {
 	}
 }
 
-func (s *Server) highCPULoop(ctx context.Context) error {
-	s.lookForHighCPU(ctx, time.Minute*20)
-	return nil
-}
-
 func (s *Server) runVersionCheckLoop(ctx context.Context) error {
 	s.runVersionCheck(ctx, time.Minute*20)
 	return nil
@@ -193,9 +188,8 @@ func main() {
 	//server.SendTrace = true
 
 	server.RegisterServer("alerter", false)
-	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Minute)
+	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Hour)
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
-	server.RegisterRepeatingTask(server.highCPULoop, "look_for_high_cpu", time.Minute*5)
 	server.RegisterRepeatingTask(server.lookForGoVersion, "look_for_go_version", time.Hour)
 	server.Log("Starting Alerter!")
 	server.Serve()

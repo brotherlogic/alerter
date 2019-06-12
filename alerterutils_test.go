@@ -129,25 +129,6 @@ func TestBuildAlert(t *testing.T) {
 	}
 }
 
-func TestCPUAlert(t *testing.T) {
-	s := InitTestServer()
-	s.lookForHighCPU(context.Background(), time.Hour)
-	if s.alertCount != 0 {
-		t.Errorf("Error in alerting")
-	}
-}
-
-func TestCPUAlertWithVersion(t *testing.T) {
-	s := InitTestServer()
-	s.goserver = &testGoserver{reportsNormal: true}
-	s.lookForHighCPU(context.Background(), time.Hour)
-	time.Sleep(time.Second)
-	s.lookForHighCPU(context.Background(), time.Millisecond)
-	if s.alertCount != 1 {
-		t.Errorf("Error in alerting: %v", s.alertCount)
-	}
-}
-
 func TestGoVersionAlert(t *testing.T) {
 	s := InitTestServer()
 	s.lookForGoVersion(context.Background())

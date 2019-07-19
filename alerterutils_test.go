@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"testing"
 	"time"
 
@@ -43,8 +42,9 @@ func (t *testGobuildslave) ListJobs(ctx context.Context, server *pbd.RegistryEnt
 }
 
 type testGoserver struct {
-	reportsNormal bool
-	goversion     bool
+	reportsNormal    bool
+	goversion        bool
+	concurrentBuilds int64
 }
 
 func (t *testGoserver) GetStats(ctx context.Context, server string, port int32) (*pbg.ServerState, error) {
@@ -64,7 +64,7 @@ func (t *testGoserver) GetStatsSingle(ctx context.Context, server string) (*pbg.
 		}
 		return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "go_version", Text: "badversion"}, &pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(200)}}}, nil
 	}
-	return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "concurrent_builds", Value: int64(2)}, &pbg.State{Key: "cpu", Fraction: float64(50)}}}, nil
+	return &pbg.ServerState{States: []*pbg.State{&pbg.State{Key: "concurrent_builds", Value: t.concurrentBuilds}, &pbg.State{Key: "cpu", Fraction: float64(50)}}}, nil
 }
 
 func InitTestServer() *Server {
@@ -123,8 +123,17 @@ func TestBuildAlert(t *testing.T) {
 	s := InitTestServer()
 	s.lookForSimulBuilds(context.Background())
 
-	log.Printf("COUNT: %v", s.alertCount)
 	if s.alertCount != 0 {
+		t.Errorf("Error in alerting: %v", s.alertCount)
+	}
+}
+
+func TestBuildAlertFires(t *testing.T) {
+	s := InitTestServer()
+	s.goserver = &testGoserver{concurrentBuilds: 5}
+	s.lookForSimulBuilds(context.Background())
+
+	if s.alertCount == 0 {
 		t.Errorf("Error in alerting: %v", s.alertCount)
 	}
 }

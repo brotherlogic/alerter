@@ -74,20 +74,16 @@ type BuildServer interface {
 	GetVersions(ctx context.Context, req *pbbs.VersionRequest) (*pbbs.VersionResponse, error)
 }
 
-type prodBuildserver struct{}
+type prodBuildserver struct {
+	dial func(server string) (*grpc.ClientConn, error)
+}
 
 func (p *prodBuildserver) GetVersions(ctx context.Context, req *pbbs.VersionRequest) (*pbbs.VersionResponse, error) {
-	ip, port, err := utils.Resolve("buildserver")
+	conn, err := p.dial("buildserver")
 	if err != nil {
 		return nil, err
 	}
-
-	conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 	defer conn.Close()
-
-	if err != nil {
-		return nil, err
-	}
 
 	client := pbbs.NewBuildServiceClient(conn)
 	return client.GetVersions(ctx, req)
@@ -136,6 +132,7 @@ func Init() *Server {
 		make(map[string]time.Time),
 	}
 	s.goserver = &prodGoserver{dial: s.DialMaster}
+	s.buildServer = &prodBuildserver{dial: s.DialMaster}
 	return s
 }
 

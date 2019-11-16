@@ -73,6 +73,7 @@ func InitTestServer() *Server {
 	s.buildServer = &testBuildserver{}
 	s.gobuildSlave = &testGobuildslave{}
 	s.SkipLog = true
+	s.SkipIssue = true
 	s.GoServer.KSclient = *keystoreclient.GetTestClient(".test")
 	s.goserver = &testGoserver{}
 	return s

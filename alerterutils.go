@@ -52,7 +52,7 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (s *Server) lookForSimulBuilds(ctx context.Context) error {

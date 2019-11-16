@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -159,8 +158,7 @@ func (s *Server) Mote(ctx context.Context, master bool) error {
 // GetState gets the state of the server
 func (s *Server) GetState() []*pbg.State {
 	return []*pbg.State{
-		&pbg.State{Key: "mismatch", Text: fmt.Sprintf("%v", s.lastMismatchTime)},
-		&pbg.State{Key: "high_cpu", Text: fmt.Sprintf("%v", s.highCPU)},
+		&pbg.State{Key: "blah", Value: int64(100)},
 	}
 }
 

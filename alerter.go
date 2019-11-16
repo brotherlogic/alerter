@@ -182,8 +182,9 @@ func main() {
 	server.Register = server
 	//server.SendTrace = true
 
-	server.RegisterServer("alerter", false)
-	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Minute)
+	server.RegisterServerV2("alerter", false)
+
+	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Hour)
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
 	server.RegisterRepeatingTask(server.lookForGoVersion, "look_for_go_version", time.Hour)
 	server.Log("Starting Alerter!")

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -52,9 +53,37 @@ func (p *prodGoserver) GetStats(ctx context.Context, ip string, port int32) (*pb
 // Discovery interface to discover
 type Discovery interface {
 	ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error)
+	getFriends(ctx context.Context) (string, error)
+	getRemoteFriends(ctx context.Context, addr string) (string, error)
 }
 
 type prodDiscovery struct{}
+
+func (p *prodDiscovery) getFriends(ctx context.Context) (string, error) {
+	return p.getRemoteFriends(ctx, "192.168.86.24:50055")
+}
+
+func (p *prodDiscovery) getRemoteFriends(ctx context.Context, addr string) (string, error) {
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	defer conn.Close()
+
+	if err != nil {
+		return "", err
+	}
+
+	client := pbg.NewGoserverServiceClient(conn)
+	st, err := client.State(ctx, &pbg.Empty{})
+	if err != nil {
+		return "", err
+	}
+
+	for _, state := range st.GetStates() {
+		if state.Key == "friends" {
+			return state.Text, nil
+		}
+	}
+	return "", fmt.Errorf("Has no friends")
+}
 
 func (p *prodDiscovery) ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error) {
 	conn, err := grpc.Dial(utils.Discover, grpc.WithInsecure())
@@ -186,6 +215,7 @@ func main() {
 	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Hour)
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
 	server.RegisterRepeatingTask(server.lookForGoVersion, "look_for_go_version", time.Hour)
+	server.RegisterRepeatingTask(server.checkFriends, "check_friends", time.Minute)
 
 	server.Serve()
 }

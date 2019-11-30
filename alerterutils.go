@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"golang.org/x/net/context"
@@ -10,6 +11,25 @@ import (
 	pbd "github.com/brotherlogic/discovery/proto"
 	pbgs "github.com/brotherlogic/gobuildslave/proto"
 )
+
+func (s *Server) checkFriends(ctx context.Context) error {
+	friends, err := s.discover.getFriends(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, friend := range strings.Split(friends, " ") {
+		rfriends, err := s.discover.getRemoteFriends(ctx, friend)
+		if err != nil {
+			return err
+		}
+		if len(rfriends) != len(friends) {
+			s.RaiseIssue(ctx, "Friend mismatch", fmt.Sprintf("%v != %v", friends, rfriends), false)
+		}
+	}
+
+	return nil
+}
 
 func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error {
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,10 +14,27 @@ import (
 	pbgbs "github.com/brotherlogic/gobuildslave/proto"
 )
 
-type testDiscovery struct{}
+type testDiscovery struct {
+	failget    bool
+	failremote bool
+}
 
 func (t *testDiscovery) ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error) {
 	return &pbd.ListResponse{Services: &pbd.ServiceList{Services: []*pbd.RegistryEntry{&pbd.RegistryEntry{Name: "gobuildslave", Ip: "1234", Port: int32(123)}}}}, nil
+}
+
+func (t *testDiscovery) getFriends(ctx context.Context) (string, error) {
+	if t.failget && !t.failremote {
+		return "", fmt.Errorf("Built to fail")
+	}
+	return "yeps", nil
+}
+
+func (t *testDiscovery) getRemoteFriends(ctx context.Context, addr string) (string, error) {
+	if t.failremote && !t.failget {
+		return "", fmt.Errorf("Built to fail")
+	}
+	return "yep", nil
 }
 
 type testBuildserver struct {
@@ -162,5 +180,34 @@ func TestGoVersionNoAlert(t *testing.T) {
 	s.lookForGoVersion(context.Background())
 	if s.alertCount != 0 {
 		t.Errorf("Error in alerting: %v", s.alertCount)
+	}
+}
+
+func TestDisc(t *testing.T) {
+	s := InitTestServer()
+	err := s.checkFriends(context.Background())
+
+	if err != nil {
+		t.Errorf("Bad check: %v", err)
+	}
+}
+
+func TestDiscFailLocal(t *testing.T) {
+	s := InitTestServer()
+	s.discover = &testDiscovery{failget: true}
+	err := s.checkFriends(context.Background())
+
+	if err == nil {
+		t.Errorf("Bad check: %v", err)
+	}
+}
+
+func TestDiscFailRemote(t *testing.T) {
+	s := InitTestServer()
+	s.discover = &testDiscovery{failremote: true}
+	err := s.checkFriends(context.Background())
+
+	if err == nil {
+		t.Errorf("Bad check: %v", err)
 	}
 }

@@ -19,7 +19,7 @@ func (s *Server) checkFriends(ctx context.Context) error {
 	}
 
 	for _, friend := range strings.Split(friends, " ") {
-		rfriends, err := s.discover.getRemoteFriends(ctx, friend)
+		rfriends, err := s.discover.getRemoteFriends(ctx, strings.Replace(strings.Replace(friend, "[", "", -1), "]", "", -1))
 		if err != nil {
 			return err
 		}

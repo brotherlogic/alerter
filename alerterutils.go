@@ -23,7 +23,7 @@ func (s *Server) checkFriends(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if len(rfriends) != len(friends) {
+		if len(strings.Split(rfriends, " ")) != len(strings.Split(friends, " ")) {
 			s.RaiseIssue(ctx, "Friend mismatch", fmt.Sprintf("%v != %v", friends, rfriends), false)
 		}
 	}

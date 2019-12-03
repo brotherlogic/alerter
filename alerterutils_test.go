@@ -27,7 +27,7 @@ func (t *testDiscovery) getFriends(ctx context.Context) (string, error) {
 	if t.failget && !t.failremote {
 		return "", fmt.Errorf("Built to fail")
 	}
-	return "yeps", nil
+	return "yeps deps", nil
 }
 
 func (t *testDiscovery) getRemoteFriends(ctx context.Context, addr string) (string, error) {

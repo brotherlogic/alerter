@@ -94,6 +94,7 @@ func InitTestServer() *Server {
 	s.SkipIssue = true
 	s.GoServer.KSclient = *keystoreclient.GetTestClient(".test")
 	s.goserver = &testGoserver{}
+	s.Registry = &pbd.RegistryEntry{}
 	return s
 }
 

@@ -24,7 +24,7 @@ func (s *Server) checkFriends(ctx context.Context) error {
 			return err
 		}
 		if len(strings.Split(rfriends, " ")) != len(strings.Split(friends, " ")) {
-			s.RaiseIssue(ctx, "Friend mismatch", fmt.Sprintf("%v != %v", friends, rfriends), false)
+			s.RaiseIssue(ctx, "Friend mismatch", fmt.Sprintf("For %v,%v -> %v != %v", s.Registry.Ip, friend, friends, rfriends), false)
 		}
 	}
 

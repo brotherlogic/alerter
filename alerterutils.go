@@ -33,24 +33,20 @@ func (s *Server) checkFriends(ctx context.Context) error {
 
 func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error {
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
-	versionMap := make(map[string]string)
 	if err == nil {
-		versions, err := s.buildServer.GetVersions(ctx, &pbbs.VersionRequest{JustLatest: true})
 		if err == nil {
-			for _, v := range versions.Versions {
-				versionMap[v.Job.Name] = v.Version
-			}
 			for _, service := range serv.Services.Services {
 				if service.Name == "gobuildslave" {
 					jobs, err := s.gobuildSlave.ListJobs(ctx, service, &pbgs.ListRequest{})
 					if err == nil {
 						for _, job := range jobs.Jobs {
 							runningVersion := job.RunningVersion
-							compiledVersion, ok := versionMap[job.Job.Name]
-							if !ok {
+							versions, err := s.buildServer.GetVersions(ctx, &pbbs.VersionRequest{JustLatest: true, Job: job.Job})
+							if err == nil && len(versions.GetVersions()) == 0 {
 								s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v has no version built", job.Job.Name), false)
 								return nil
 							}
+							compiledVersion := versions.GetVersions()[0].GetVersion()
 							if compiledVersion != runningVersion && len(runningVersion) > 0 {
 								if _, ok := s.lastMismatchTime[service.Identifier+job.Job.Name]; !ok {
 									s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now()

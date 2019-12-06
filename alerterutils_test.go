@@ -39,9 +39,14 @@ func (t *testDiscovery) getRemoteFriends(ctx context.Context, addr string) (stri
 
 type testBuildserver struct {
 	match bool
+	none  bool
 }
 
 func (t *testBuildserver) GetVersions(ctx context.Context, req *pbbs.VersionRequest) (*pbbs.VersionResponse, error) {
+	if t.none {
+		return &pbbs.VersionResponse{}, nil
+	}
+
 	if !t.match {
 		return &pbbs.VersionResponse{Versions: []*pbbs.Version{&pbbs.Version{Version: "testing", Job: &pbgbs.Job{Name: "madeup"}}}}, nil
 	}
@@ -110,6 +115,16 @@ func TestAlert(t *testing.T) {
 func TestAlertJobDiff(t *testing.T) {
 	s := InitTestServer()
 	s.gobuildSlave = &testGobuildslave{job: true}
+	s.runVersionCheck(context.Background(), time.Hour)
+
+	if s.alertCount != 0 {
+		t.Errorf("Error in alerting")
+	}
+}
+
+func TestAlertEmptyBuild(t *testing.T) {
+	s := InitTestServer()
+	s.buildServer = &testBuildserver{none: true}
 	s.runVersionCheck(context.Background(), time.Hour)
 
 	if s.alertCount != 0 {

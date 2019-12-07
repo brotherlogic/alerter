@@ -13,6 +13,8 @@ import (
 	"github.com/brotherlogic/keystore/client"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pbbs "github.com/brotherlogic/buildserver/proto"
 	pbd "github.com/brotherlogic/discovery/proto"
@@ -75,6 +77,12 @@ func (p *prodDiscovery) getRemoteFriends(ctx context.Context, addr string) (stri
 	st, err := client.State(ctx, &pbg.Empty{})
 	if err != nil {
 		return "", err
+	}
+
+	for _, state := range st.GetStates() {
+		if state.Key == "ftime" && state.TimeValue == 0 {
+			return "", status.Errorf(codes.FailedPrecondition, "This friend is not ready to serve yet")
+		}
 	}
 
 	for _, state := range st.GetStates() {

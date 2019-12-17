@@ -218,7 +218,10 @@ func main() {
 	server.PrepServer()
 	server.Register = server
 
-	server.RegisterServerV2("alerter", false, false)
+	err := server.RegisterServerV2("alerter", false, false)
+	if err != nil {
+		return
+	}
 
 	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Hour)
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)

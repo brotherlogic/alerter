@@ -52,11 +52,6 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error
 									s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now()
 								}
 
-								if time.Now().Sub(s.lastMismatchTime[service.Identifier+job.Job.Name]) > delay {
-									s.alertCount++
-									s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v is running an old version (%v vs %v)", job.Job.Name, runningVersion, compiledVersion), false)
-								}
-
 							} else {
 								delete(s.lastMismatchTime, service.Identifier+job.Job.Name)
 							}

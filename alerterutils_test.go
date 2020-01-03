@@ -132,17 +132,6 @@ func TestAlertEmptyBuild(t *testing.T) {
 	}
 }
 
-func TestAlertWithTime(t *testing.T) {
-	s := InitTestServer()
-	s.runVersionCheck(context.Background(), time.Hour)
-	time.Sleep(time.Second)
-	s.runVersionCheck(context.Background(), time.Millisecond)
-
-	if s.alertCount != 1 {
-		t.Errorf("Error in alerting")
-	}
-}
-
 func TestAlertClear(t *testing.T) {
 	s := InitTestServer()
 	s.runVersionCheck(context.Background(), time.Hour)

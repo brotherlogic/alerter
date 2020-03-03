@@ -46,16 +46,17 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error
 								s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v has no version built", job.Job.Name), false)
 								return nil
 							}
-							compiledVersion := versions.GetVersions()[0].GetVersion()
-							if compiledVersion != runningVersion && len(runningVersion) > 0 {
-								if _, ok := s.lastMismatchTime[service.Identifier+job.Job.Name]; !ok {
-									s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now()
+							if len(versions.GetVersions()) > 0 {
+								compiledVersion := versions.GetVersions()[0].GetVersion()
+								if compiledVersion != runningVersion && len(runningVersion) > 0 {
+									if _, ok := s.lastMismatchTime[service.Identifier+job.Job.Name]; !ok {
+										s.lastMismatchTime[service.Identifier+job.Job.Name] = time.Now()
+									}
+
+								} else {
+									delete(s.lastMismatchTime, service.Identifier+job.Job.Name)
 								}
-
-							} else {
-								delete(s.lastMismatchTime, service.Identifier+job.Job.Name)
 							}
-
 						}
 					}
 				}

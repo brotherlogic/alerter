@@ -72,7 +72,7 @@ func (s *Server) lookForSimulBuilds(ctx context.Context) error {
 	stats, err := s.goserver.GetStatsSingle(ctx, "buildserver")
 	if err == nil {
 		for _, state := range stats.States {
-			if state.Key == "concurrent_builds" && state.Value > int64(2) {
+			if state.Key == "concurrent_builds" && state.Value > int64(4) {
 				s.alertCount++
 				s.RaiseIssue(ctx, "ConcurrentBuilds", fmt.Sprintf("Buildserver is reporting concurrent builds: %v", state.Value), false)
 			}

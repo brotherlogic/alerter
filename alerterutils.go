@@ -15,12 +15,14 @@ import (
 func (s *Server) checkFriends(ctx context.Context) error {
 	friends, err := s.discover.getFriends(ctx)
 	if err != nil {
+		s.RaiseIssue(ctx, "Friend Finder", fmt.Sprintf("Unable to find friends: %v", err), false)
 		return err
 	}
 
 	for _, friend := range strings.Split(friends, " ") {
 		rfriends, err := s.discover.getRemoteFriends(ctx, strings.Replace(strings.Replace(friend, "[", "", -1), "]", "", -1))
 		if err != nil {
+			s.RaiseIssue(ctx, "Friend Finder", fmt.Sprintf("Unable to get remote friends: %v", err), false)
 			return err
 		}
 		if len(strings.Split(rfriends, " ")) != len(strings.Split(friends, " ")) {

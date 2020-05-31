@@ -57,6 +57,7 @@ type Discovery interface {
 	ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error)
 	getFriends(ctx context.Context) (string, error)
 	getRemoteFriends(ctx context.Context, addr string) (string, error)
+	list(ctx context.Context, addr string) ([]*pbd.RegistryEntry, error)
 }
 
 type prodDiscovery struct{}
@@ -91,6 +92,22 @@ func (p *prodDiscovery) getRemoteFriends(ctx context.Context, addr string) (stri
 		}
 	}
 	return "", fmt.Errorf("Has no friends")
+}
+
+func (p *prodDiscovery) list(ctx context.Context, addr string) ([]*pbd.RegistryEntry, error) {
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	defer conn.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	client := pbd.NewDiscoveryServiceV2Client(conn)
+	res, err := client.Get(ctx, &pbd.GetRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return res.GetServices(), err
 }
 
 func (p *prodDiscovery) ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error) {
@@ -227,6 +244,7 @@ func main() {
 	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
 	server.RegisterRepeatingTask(server.lookForGoVersion, "look_for_go_version", time.Hour)
 	server.RegisterRepeatingTask(server.checkFriends, "check_friends", time.Minute)
+	server.RegisterRepeatingTask(server.evaluateFriends, "evaluate_friends", time.Minute*5)
 
 	server.Serve()
 }

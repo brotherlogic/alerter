@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -10,7 +11,49 @@ import (
 	pbbs "github.com/brotherlogic/buildserver/proto"
 	pbd "github.com/brotherlogic/discovery/proto"
 	pbgs "github.com/brotherlogic/gobuildslave/proto"
+	"github.com/golang/protobuf/proto"
 )
+
+func (s *Server) evaluateFriends(ctx context.Context) error {
+	friends, err := s.discover.getFriends(ctx)
+	if err != nil {
+		s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Unable to evalute friends: %v", err), false)
+		return err
+	}
+
+	strFriends := strings.Split(friends, " ")
+	rand.Shuffle(len(strFriends), func(i, j int) { strFriends[i], strFriends[j] = strFriends[j], strFriends[i] })
+
+	if len(strFriends) < 2 {
+		s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Unable to evaluate friends - we have less than 2: %v", strFriends), false)
+		return fmt.Errorf("Short friends")
+	}
+
+	friend1 := strFriends[0]
+	friend2 := strFriends[1]
+	list1, err1 := s.discover.list(ctx, friend1)
+	list2, err2 := s.discover.list(ctx, friend2)
+	if err1 != nil || err2 != nil {
+		s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("%v or %v is causing an issue", err1, err2), false)
+		return err1
+	}
+
+	for _, entry1 := range list1 {
+		found := false
+		for _, entry2 := range list2 {
+			if proto.Equal(entry1, entry2) {
+				found = true
+			}
+		}
+
+		if !found {
+			s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Mismatch in directory listing %v and then %v (%v)", list1, list2, entry1), false)
+			return fmt.Errorf("Mismatch")
+		}
+	}
+
+	return nil
+}
 
 func (s *Server) checkFriends(ctx context.Context) error {
 	friends, err := s.discover.getFriends(ctx)

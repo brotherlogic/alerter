@@ -17,15 +17,34 @@ import (
 type testDiscovery struct {
 	failget    bool
 	failremote bool
+	friends    string
+	faillist   bool
+	diff       bool
 }
 
 func (t *testDiscovery) ListAllServices(ctx context.Context, req *pbd.ListRequest) (*pbd.ListResponse, error) {
 	return &pbd.ListResponse{Services: &pbd.ServiceList{Services: []*pbd.RegistryEntry{&pbd.RegistryEntry{Name: "gobuildslave", Ip: "1234", Port: int32(123)}}}}, nil
 }
 
+func (t *testDiscovery) list(ctx context.Context, addr string) ([]*pbd.RegistryEntry, error) {
+	if t.faillist {
+		return nil, fmt.Errorf("Built to fail")
+	}
+	if t.diff {
+		if addr == "yeps" {
+			return []*pbd.RegistryEntry{&pbd.RegistryEntry{Identifier: "one"}, &pbd.RegistryEntry{Identifier: "three"}}, nil
+		}
+	}
+
+	return []*pbd.RegistryEntry{&pbd.RegistryEntry{Identifier: "one"}, &pbd.RegistryEntry{Identifier: "two"}}, nil
+}
+
 func (t *testDiscovery) getFriends(ctx context.Context) (string, error) {
 	if t.failget && !t.failremote {
 		return "", fmt.Errorf("Built to fail")
+	}
+	if len(t.friends) > 0 {
+		return t.friends, nil
 	}
 	return "yeps deps", nil
 }
@@ -214,5 +233,59 @@ func TestDiscFailRemote(t *testing.T) {
 
 	if err == nil {
 		t.Errorf("Bad check: %v", err)
+	}
+}
+
+func TestBasicProcess(t *testing.T) {
+	s := InitTestServer()
+
+	err := s.evaluateFriends(context.Background())
+
+	if err != nil {
+		t.Errorf("Basic eval failed: %v", err)
+	}
+}
+
+func TestBasicProcessPullFail(t *testing.T) {
+	s := InitTestServer()
+	s.discover = &testDiscovery{failget: true}
+
+	err := s.evaluateFriends(context.Background())
+
+	if err == nil {
+		t.Errorf("Basic eval failed: %v", err)
+	}
+}
+
+func TestBasicProcessShortFriends(t *testing.T) {
+	s := InitTestServer()
+	s.discover = &testDiscovery{friends: "deps"}
+
+	err := s.evaluateFriends(context.Background())
+
+	if err == nil {
+		t.Errorf("Basic eval failed: %v", err)
+	}
+}
+
+func TestBasicProcessGetListing(t *testing.T) {
+	s := InitTestServer()
+	s.discover = &testDiscovery{faillist: true}
+
+	err := s.evaluateFriends(context.Background())
+
+	if err == nil {
+		t.Errorf("Basic eval failed: %v", err)
+	}
+}
+
+func TestBasicProcessDiff(t *testing.T) {
+	s := InitTestServer()
+	s.discover = &testDiscovery{diff: true}
+
+	err := s.evaluateFriends(context.Background())
+
+	if err == nil {
+		t.Errorf("Basic eval failed: %v", err)
 	}
 }

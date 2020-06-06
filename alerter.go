@@ -63,7 +63,7 @@ type Discovery interface {
 type prodDiscovery struct{}
 
 func (p *prodDiscovery) getFriends(ctx context.Context) (string, error) {
-	return p.getRemoteFriends(ctx, "192.168.86.59:50055")
+	return p.getRemoteFriends(ctx, "192.168.86.49:50055")
 }
 
 func (p *prodDiscovery) getRemoteFriends(ctx context.Context, addr string) (string, error) {

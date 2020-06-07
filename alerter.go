@@ -216,9 +216,9 @@ func (s *Server) GetState() []*pbg.State {
 	}
 }
 
-func (s *Server) runVersionCheckLoop(ctx context.Context) error {
+func (s *Server) runVersionCheckLoop(ctx context.Context) (time.Time, error) {
 	s.runVersionCheck(ctx, time.Minute*20)
-	return nil
+	return time.Now().Add(time.Hour), nil
 }
 
 func main() {
@@ -235,16 +235,15 @@ func main() {
 	server.PrepServer()
 	server.Register = server
 
-	err := server.RegisterServerV2("alerter", false, false)
+	err := server.RegisterServerV2("alerter", false, true)
 	if err != nil {
 		return
 	}
 
-	server.RegisterRepeatingTask(server.runVersionCheckLoop, "run_version_check", time.Hour)
-	server.RegisterRepeatingTask(server.lookForSimulBuilds, "look_for_simul_builds", time.Minute)
-	server.RegisterRepeatingTask(server.lookForGoVersion, "look_for_go_version", time.Hour)
-	server.RegisterRepeatingTask(server.checkFriends, "check_friends", time.Minute)
-	server.RegisterRepeatingTask(server.evaluateFriends, "evaluate_friends", time.Minute*5)
+	server.RegisterLockingTask(server.runVersionCheckLoop, "run_version_check")
+	server.RegisterLockingTask(server.lookForGoVersion, "look_for_go_version")
+	server.RegisterLockingTask(server.checkFriends, "check_friends")
+	server.RegisterLockingTask(server.evaluateFriends, "evaluate_friends")
 
 	server.Serve()
 }

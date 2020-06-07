@@ -209,7 +209,7 @@ func TestGoVersionNoAlert(t *testing.T) {
 
 func TestDisc(t *testing.T) {
 	s := InitTestServer()
-	err := s.checkFriends(context.Background())
+	_, err := s.checkFriends(context.Background())
 
 	if err != nil {
 		t.Errorf("Bad check: %v", err)
@@ -219,7 +219,7 @@ func TestDisc(t *testing.T) {
 func TestDiscFailLocal(t *testing.T) {
 	s := InitTestServer()
 	s.discover = &testDiscovery{failget: true}
-	err := s.checkFriends(context.Background())
+	_, err := s.checkFriends(context.Background())
 
 	if err == nil {
 		t.Errorf("Bad check: %v", err)
@@ -229,7 +229,7 @@ func TestDiscFailLocal(t *testing.T) {
 func TestDiscFailRemote(t *testing.T) {
 	s := InitTestServer()
 	s.discover = &testDiscovery{failremote: true}
-	err := s.checkFriends(context.Background())
+	_, err := s.checkFriends(context.Background())
 
 	if err == nil {
 		t.Errorf("Bad check: %v", err)
@@ -239,7 +239,7 @@ func TestDiscFailRemote(t *testing.T) {
 func TestBasicProcess(t *testing.T) {
 	s := InitTestServer()
 
-	err := s.evaluateFriends(context.Background())
+	_, err := s.evaluateFriends(context.Background())
 
 	if err != nil {
 		t.Errorf("Basic eval failed: %v", err)
@@ -250,7 +250,7 @@ func TestBasicProcessPullFail(t *testing.T) {
 	s := InitTestServer()
 	s.discover = &testDiscovery{failget: true}
 
-	err := s.evaluateFriends(context.Background())
+	_, err := s.evaluateFriends(context.Background())
 
 	if err == nil {
 		t.Errorf("Basic eval failed: %v", err)
@@ -261,7 +261,7 @@ func TestBasicProcessShortFriends(t *testing.T) {
 	s := InitTestServer()
 	s.discover = &testDiscovery{friends: "deps"}
 
-	err := s.evaluateFriends(context.Background())
+	_, err := s.evaluateFriends(context.Background())
 
 	if err == nil {
 		t.Errorf("Basic eval failed: %v", err)
@@ -272,7 +272,7 @@ func TestBasicProcessGetListing(t *testing.T) {
 	s := InitTestServer()
 	s.discover = &testDiscovery{faillist: true}
 
-	err := s.evaluateFriends(context.Background())
+	_, err := s.evaluateFriends(context.Background())
 
 	if err == nil {
 		t.Errorf("Basic eval failed: %v", err)
@@ -283,7 +283,7 @@ func TestBasicProcessDiff(t *testing.T) {
 	s := InitTestServer()
 	s.discover = &testDiscovery{diff: true}
 
-	err := s.evaluateFriends(context.Background())
+	_, err := s.evaluateFriends(context.Background())
 
 	if err == nil {
 		t.Errorf("Basic eval failed: %v", err)

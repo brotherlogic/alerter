@@ -16,11 +16,11 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func (s *Server) evaluateFriends(ctx context.Context) error {
+func (s *Server) evaluateFriends(ctx context.Context) (time.Time, error) {
 	friends, err := s.discover.getFriends(ctx)
 	if err != nil {
 		s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Unable to evalute friends: %v", err), false)
-		return err
+		return time.Now().Add(time.Minute * 5), err
 	}
 
 	strFriends := strings.Split(friends, " ")
@@ -28,7 +28,7 @@ func (s *Server) evaluateFriends(ctx context.Context) error {
 
 	if len(strFriends) < 2 {
 		s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Unable to evaluate friends - we have less than 2: %v", strFriends), false)
-		return fmt.Errorf("Short friends")
+		return time.Now().Add(time.Minute * 5), fmt.Errorf("Short friends")
 	}
 
 	friend1 := strFriends[0]
@@ -37,7 +37,7 @@ func (s *Server) evaluateFriends(ctx context.Context) error {
 	list2, err2 := s.discover.list(ctx, friend2)
 	if err1 != nil || err2 != nil {
 		s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("%v or %v is causing an issue", err1, err2), false)
-		return err1
+		return time.Now().Add(time.Minute * 5), err1
 	}
 
 	for _, entry1 := range list1 {
@@ -50,37 +50,37 @@ func (s *Server) evaluateFriends(ctx context.Context) error {
 
 		if !found {
 			s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Mismatch in directory listing %v and then %v (%v)", list1, list2, entry1), false)
-			return fmt.Errorf("Mismatch")
+			return time.Now().Add(time.Minute * 5), fmt.Errorf("Mismatch")
 		}
 	}
 
-	return nil
+	return time.Now().Add(time.Minute * 5), nil
 }
 
-func (s *Server) checkFriends(ctx context.Context) error {
+func (s *Server) checkFriends(ctx context.Context) (time.Time, error) {
 	friends, err := s.discover.getFriends(ctx)
 	if err != nil {
 		if status.Convert(err).Code() != codes.FailedPrecondition {
 			s.RaiseIssue(ctx, "Friend Finder", fmt.Sprintf("Unable to find friends: %v", err), false)
 		}
-		return err
+		return time.Now().Add(time.Minute * 5), err
 	}
 
 	for _, friend := range strings.Split(friends, " ") {
 		rfriends, err := s.discover.getRemoteFriends(ctx, strings.Replace(strings.Replace(friend, "[", "", -1), "]", "", -1))
 		if err != nil {
 			s.RaiseIssue(ctx, "Friend Finder", fmt.Sprintf("Unable to get remote friends: %v", err), false)
-			return err
+			return time.Now().Add(time.Minute * 5), err
 		}
 		if len(strings.Split(rfriends, " ")) != len(strings.Split(friends, " ")) {
 			s.RaiseIssue(ctx, "Friend mismatch", fmt.Sprintf("For %v,%v -> %v != %v", s.Registry.Ip, friend, friends, rfriends), false)
 		}
 	}
 
-	return nil
+	return time.Now().Add(time.Minute * 5), nil
 }
 
-func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error {
+func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) (time.Time, error) {
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
 	if err == nil {
 		if err == nil {
@@ -93,7 +93,7 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error
 							versions, err := s.buildServer.GetVersions(ctx, &pbbs.VersionRequest{JustLatest: true, Job: job.Job})
 							if err == nil && len(versions.GetVersions()) == 0 {
 								s.RaiseIssue(ctx, "Version Problem", fmt.Sprintf("%v has no version built", job.Job.Name), false)
-								return nil
+								return time.Now().Add(time.Minute * 5), nil
 							}
 							if len(versions.GetVersions()) > 0 {
 								compiledVersion := versions.GetVersions()[0].GetVersion()
@@ -113,7 +113,7 @@ func (s *Server) runVersionCheck(ctx context.Context, delay time.Duration) error
 		}
 	}
 
-	return err
+	return time.Now().Add(time.Minute * 5), err
 }
 
 func (s *Server) lookForSimulBuilds(ctx context.Context) error {
@@ -130,7 +130,7 @@ func (s *Server) lookForSimulBuilds(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) lookForGoVersion(ctx context.Context) error {
+func (s *Server) lookForGoVersion(ctx context.Context) (time.Time, error) {
 	s.Log("Looking for high CPU usage")
 
 	serv, err := s.discover.ListAllServices(ctx, &pbd.ListRequest{})
@@ -159,5 +159,5 @@ func (s *Server) lookForGoVersion(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	return time.Now().Add(time.Minute * 5), nil
 }

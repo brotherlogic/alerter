@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pbbs "github.com/brotherlogic/buildserver/proto"
 	pbd "github.com/brotherlogic/discovery/proto"
@@ -58,7 +60,9 @@ func (s *Server) evaluateFriends(ctx context.Context) error {
 func (s *Server) checkFriends(ctx context.Context) error {
 	friends, err := s.discover.getFriends(ctx)
 	if err != nil {
-		s.RaiseIssue(ctx, "Friend Finder", fmt.Sprintf("Unable to find friends: %v", err), false)
+		if status.Convert(err).Code() != codes.FailedPrecondition {
+			s.RaiseIssue(ctx, "Friend Finder", fmt.Sprintf("Unable to find friends: %v", err), false)
+		}
 		return err
 	}
 

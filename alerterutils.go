@@ -19,8 +19,11 @@ import (
 func (s *Server) evaluateFriends(ctx context.Context) (time.Time, error) {
 	friends, err := s.discover.getFriends(ctx)
 	if err != nil {
-		s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Unable to evalute friends: %v", err), false)
+		if status.Convert(err).Code() != codes.FailedPrecondition {
+			s.RaiseIssue(ctx, "Friend Evaluator", fmt.Sprintf("Unable to evalute friends: %v", err), false)
+		}
 		return time.Now().Add(time.Minute * 5), err
+
 	}
 
 	strFriends := strings.Split(friends, " ")
